@@ -1,0 +1,295 @@
+<html>
+<head>
+<title>ETC BUSINESS</title>
+<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css"/>
+<link rel="stylesheet" href="http://libs.cartocdn.com/cartodb.js/v3/3.15/themes/css/cartodb.css" />
+<script src="http://libs.cartocdn.com/cartodb.js/v3/3.15/cartodb.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+<script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-markercluster/v0.4.0/leaflet.markercluster.js'></script>
+<link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-markercluster/v0.4.0/MarkerCluster.css' rel='stylesheet' />
+<link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-markercluster/v0.4.0/MarkerCluster.Default.css' rel='stylesheet' />
+<link rel="stylesheet" href="leaflet-control-geocoder-1.4.0/dist/Control.Geocoder.css" />
+<link rel="stylesheet" href="leaflet-sidebar/L.Control.Sidebar.css" />
+<link rel="stylesheet" href="leaflet-fullscreen/Control.FullScreen.css"></script>
+<link rel="stylesheet" href="leaflet-label/leaflet.label.css" />
+
+<script src="leaflet-control-geocoder-1.4.0/dist/Control.Geocoder.js"></script>
+<script src="jquery/jquery-1.6.4.min.js"></script>
+<script src="spin-js/spin.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/2.4.0/math.min.js"></script>
+<script src="spin-js/jquery.spin.js"></script>
+<script src="d3-table/d3.min.js"></script>
+<script src="http://dimplejs.org/dist/dimple.v2.1.6.min.js"></script>
+<script src="leaflet-label/leaflet.label-src.js"></script>
+<script src="leaflet-pip/leaflet-pip.min.js"></script>
+
+<script src="css2pdf/xepOnline.jqPlugin.js"></script>
+
+<script src="leaflet-fullscreen/Control.FullScreen.js"></script>
+
+
+
+    <script src="leaflet-sidebar/L.Control.Sidebar.js"></script>
+	<script src="button/leaflet-button.js"></script>
+
+</head>
+<body>
+
+<style>
+
+#header {
+font-family: "Courier New";  
+
+}
+.btn-primary{
+	background: none repeat scroll 0 0 rgba(0, 0, 0, 0.25);
+	background-color:#ffffff;
+  font-weight: bold;
+	font-size:12px;
+	color:#777777;
+	border-radius: 4px;
+	margin: 0 ;
+	padding: 3px;
+	height: auto;  
+  width:120px;
+}
+
+#sidebar{
+	font-weight:"bold";
+	padding:10px;
+}
+
+.form {
+font-size:90%;  
+
+}
+
+</style>
+
+<div id="map" style="width: 100%; height: 100%;"></div>
+<div id="spinBox" claVss='spinner'></div>
+
+<script type="text/javascript">
+
+var config =
+{
+	city: "Trenton",
+	southwest: L.latLng(40.18000, -74.85000),
+    northeast: L.latLng(40.26000, -74.67000),
+    rev_geocoding_apikey: 'AIzaSyAKf5AB_5QngOuThxqDCo8A8U17qpCBu00',
+    database_name: 'trenton_master',
+    additional_attrib : 'created by iana dikidjieva to cause trouble :-)<br>',
+   	sql_url : 'http://restoringtrenton.cartodb.com/api/v2/sql?q=',
+  
+}	
+
+var popup = L.popup();
+var wardLayerURL = encodeURI("https://trenton-downtown.cartodb.com/api/v2/sql?format=GeoJSON&q=SELECT * FROM wards");
+var tdaLayerURL = encodeURI("https://trenton-downtown.cartodb.com/api/v2/sql?format=GeoJSON&q=SELECT * FROM tda_boundary_clean");
+var etcLayerURL = encodeURI("https://trenton-downtown.cartodb.com/api/v2/sql?format=GeoJSON&q=SELECT * FROM etn_boundary");
+var inTDA;
+var ward='';
+var lat;
+var lng;
+var address='';
+var addInput = '';
+
+
+var map = L.map('map', {
+  fullscreenControl: true,
+  fullscreenControlOptions: {
+    position: 'topleft'
+  }
+}).setView([40.231, -74.745], 15);
+
+var stamen = L.tileLayer('http://a.tile.stamen.com/toner-lite/{z}/{x}/{y}.png', {attribution: config.additional_attrib + ' uses a <a href="http://stamen.com">stamen</a> basemap'});
+stamen.addTo(map);
+
+googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
+    maxZoom: 20,
+    subdomains:['mt0','mt1','mt2','mt3'],
+	attribution: '<br>' + config.additional_attrib
+});
+
+var bases = { "streets (stamen toner lite)": stamen, "google satellite": googleSat};
+
+<!-- geocode plugin -->
+
+var geocoder = new L.Control.Geocoder.google(),
+			control = L.Control.geocoder({
+				geocoder: geocoder,  
+          
+			}).addTo(map);     
+
+ <!-- issue report sidebar -->
+ 
+  var div_sidebar = document.createElement('div');
+  div_sidebar.id = "sidebar";
+  div_sidebar.class = "sidebar";
+  $('body')[0].appendChild(div_sidebar);
+  
+  sidebar = L.control.sidebar('sidebar', {
+      position: 'right'
+  });
+	map.addControl(sidebar);
+
+<!-- pulling parcel bases off RestoringTrenton -->
+var parcelMasterURL = 'https://restoringtrenton.cartodb.com/api/v2/viz/aebbd47a-5690-11e5-beed-0e853d047bba/viz.json';
+
+<!-- TDA boundary -->
+var tda_URL = 'https://trenton-downtown.cartodb.com/api/v2/viz/c929e5fa-2781-11e6-a299-0e31c9be1b51/viz.json';
+
+<!-- ETC boundary -->
+var etc_URL = 'https://trenton-downtown.carto.com/api/v2/viz/b306739a-5802-11e6-8581-0e05a8b3e3d7/viz.json';
+
+<!-- for the boundary/territory checkers -- whose problem is it? -->
+
+var wardLayer = L.geoJson();
+function addWards(data, map) {
+    wardLayer = L.geoJson(data);   
+    }
+$.getJSON(wardLayerURL, function(data) { addWards(data, map); });
+
+var tdaLayer = L.geoJson();
+function addTDA(data, map) {
+    tdaLayer = L.geoJson(data);   
+    }
+$.getJSON(tdaLayerURL, function(data) { addTDA(data, map); });
+
+var etcLayer = L.geoJson();
+function addETC(data, map) {
+    etcLayer = L.geoJson(data);   
+    }
+$.getJSON(etcLayerURL, function(data) { addETC(data, map); });
+
+
+<!-- back to overlayers for the main map, currently turned off -->
+  overlayLayers = {}; 
+  var sublayers = [allPropsGet, tdaGet, etcGet];
+
+<!-- basic parcel outlines -->
+  
+  cartodb.createLayer(map, parcelMasterURL)
+    .addTo(map)
+    .on('done', function(layer) { 
+      layer.setZIndex(1);
+      var sublayer = layer.getSubLayer(0);
+      sublayer.set(allPropsGet);
+      sublayers.push(sublayer);
+      overlayLayers["BASE PARCELS"] = layer;
+
+      layer.setInteraction(false);   
+      
+      }).on('error', function() { 
+      //log the error
+    });  
+    
+    var allPropsGet = {
+    sql: "SELECT * FROM trenton_master",
+    cartocss: "#trenton_properties{polygon-fill: #fff; polygon-opacity:0;line-color:#999; line-opacity:0.2;} #trenton_properties[parc_type='OPEN SPACE OR CEMETERY'] {polygon-fill:#259073; polygon-opacity:.3;}",
+  }
+  
+   var tdaGet = {
+	 sql: "SELECT * FROM tda_boundary_clean"}   
+   
+   var etcGet = {
+	 sql: "SELECT * FROM etn_boundary"}    
+   
+   var vacantPropsGet = {
+    sql: "SELECT * FROM trenton_master where parc_type like '%VACANT%'",
+    cartocss: "#trenton_master[parc_type='VACANT LOT']{polygon-fill: #B9D132; polygon-opacity:0.5;line-color:#fff; line-opacity:0.4;} #trenton_master[parc_type = 'VACANT BLDG'] {polygon-fill: #FF0000; polygon-opacity:0.5;line-color: #fff; line-opacity:0.4;} #trenton_master[parc_type = 'VACANT LOWER'] {polygon-fill: #FF9900; polygon-opacity:0.6;line-color: #fff; line-opacity:0.4;}",
+	 } 
+
+<!-- here are the vacants -->  
+  cartodb.createLayer(map, parcelMasterURL)
+    .addTo(map)
+    .on('done', function(layer) { 
+      layer.setZIndex(2);
+      var sublayer = layer.getSubLayer(0);
+	  sublayer.set(vacantPropsGet);
+      sublayers.push(sublayer);
+      overlayLayers["VACANT PROPERTIES"] = layer;
+
+      layer.setInteraction(false);
+	  
+     }).on('error', function() { 
+      //log the error
+    });
+   
+   <!-- ETC boundary as sublayer -->
+cartodb.createLayer(map, etc_URL)
+    .addTo(map)
+    .on('done', function(layer) { 
+      layer.setZIndex(13);
+      var sublayer = layer.getSubLayer(0);
+
+      sublayer.set(etcGet);
+      sublayers.push(sublayer);
+	    layer.setInteraction(false);
+      overlayLayers["EAST TRENTON"] = layer; 
+      
+	  L.control.layers(bases, overlayLayers, {position:'topleft'}).addTo(map);
+	 
+     }).on('error', function() { 
+      //log the error
+    });  
+
+ 		var popup = L.popup();    
+
+cartoURL_infolayer = encodeURI("https://restoringtrenton.cartodb.com/api/v2/sql?format=GeoJSON&q=SELECT * FROM trenton_master");
+
+var spinner = new Spinner().spin(spinBox);
+$('#spinBox').show();
+		$.getJSON(cartoURL_infolayer,
+            function(data) {
+			
+	        infoLayer = L.geoJson(data, {
+				style: 	{color: "#ffffff", fillColor:"#ffffff", weight: 0, opacity:0, fillOpacity:0},
+				
+				onEachFeature: function (feature, layer) { 
+        
+				var bounds = layer.getBounds();
+				var center = bounds.getCenter();
+
+				//sigh, we resort to creepy google again to make the form to report the issues. 
+				
+				var propAdd = feature.properties.address;
+				var cartodbID = feature.properties.cartodb_id;
+				var formURL="https://docs.google.com/forms/d/e/1FAIpQLScIc1YFw09VFoqexutqhkHqGF2zShGu5P2uwutS3Yaob3HeDQ/viewform?entry.1233008467="+propAdd+"&entry.492807532="+cartodbID+"&entry.935525454="+feature.geometry.coordinates+"&entry.1771840456&entry.166967433&entry.1844891497&entry.1779767764&entry.2073537726&entry.1916251852&entry.1028548576&entry.610357054&entry.561214586&entry.973868772&entry.1063181731&entry.1073042997&entry.1811742638&entry.1912605854&entry.1738946058&entry.1237746172&entry.1155841774&entry.233286206&entry.1437250960&entry.824746662&entry.1718281095&entry.1915372513";
+				
+				//but check out our sexy popup 
+				
+				var popupContent = "<b>"+ feature.properties.address + 
+									"</b><br>"+ feature.properties.parc_type +
+									"<hr><b><a target = 'blank' href='"+ formURL + "'>BUSINESS</a></b>" +
+									"<hr><b>OWNER</B><BR>"+feature.properties.owner +
+									"<br>"+feature.properties.ownstreet + 
+									"<br>"+feature.properties.owncity +
+									"<br><br><B>CONDITIONS</B>: " + feature.properties.conditions + 
+									"<br><B>FIELD NOTES</B>: " + feature.properties.notes + 
+									"<hr><B>TAX INFO</B><BR>LEADLOT: " + feature.properties.leadlot +
+									"<BR>TAXES: $" + feature.properties.taxes +									
+									"<br>ASSESSED: $"+feature.properties.totalassmt +
+									"<br>LIENS (CITY): $" + feature.properties.city_liens + 
+									"<br>LIENS (PRIVATE): $" + feature.properties.priv_liens + 
+									"<hr><b>LAND USE INFO</B><BR>REDEV'T AREA: " + feature.properties.redev_area + 
+									"<br>ZONING: "+feature.properties.zone_abrv+"&nbsp"+feature.properties.descrip + 
+									"<hr><b>ACTIONS</B><BR>TAX FORECLOSURE: " + feature.properties.foreclosed + 
+									"<br>CITY AUCTION: " + feature.properties.auction;
+				layer.bindPopup(popupContent);  
+        layer.bindLabel(feature.properties.address);
+				}
+			});
+				$('#spinBox').hide();
+				infoLayer.addTo(map);
+				
+		});
+                     
+    
+    
+
+
+
+</script>
+</body>
+</html>
