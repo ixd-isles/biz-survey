@@ -1,0 +1,37 @@
+<html>
+<script>
+  
+  // The function will be called after the form is submitted
+  function uploadFile() {
+    document.getElementById('uploadFile').value = "Uploading File..";
+    google.script.run
+       .withSuccessHandler(fileUploaded)
+       .uploadFiles(document.getElementById("labnol"));
+    return false;
+  }
+ 
+  // This function will be called after the Google Script has executed
+  function fileUploaded(status) {
+    document.getElementById('issuePicFormlet').style.display = 'none';
+    document.getElementById('output').innerHTML = status;
+  }
+  
+</script>
+ 
+<form id="issuePicFormlet">
+<b>PHOTO UPLOAD</B><BR>
+  <input type="text" name="myName" placeholder="Your name (required)" required><br>
+  <input type="email" name="myEmail" placeholder="Your email (required)" required> <br><br> 
+ 
+<!-- File input filed -->
+  <input type="file" name="myFile" accept="image/*">
+ 
+  <!-- The submit button. It calls the server side function uploadfiles() on click -->
+  <br><br><input type="submit" id="uploadFile" value="GO!" 
+         onclick="this.value='Uploading...';uploadFile();">
+ 
+</form>
+ 
+<!-- Here the results of the form submission will be displayed -->
+<div id="output"></div>
+<html>
