@@ -3,9 +3,9 @@
 <title>ETC BUSINESS</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <link rel="stylesheet" href="leaflet-0.7.3/leaflet.css"/>
-<link rel="stylesheet" href="https://libs.cartocdn.com/cartodb.js/v3/3.15/themes/css/cartodb.css" />
-<script src="https://cartodb-libs.global.ssl.fastly.net/cartodb.js/v3/3.15.8/cartodb.js"></script>
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="http://libs.cartocdn.com/cartodb.js/v3/3.15/themes/css/cartodb.css" />
+<script src="http://libs.cartocdn.com/cartodb.js/v3/3.15/cartodb.js"></script>
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
 <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-markercluster/v0.4.0/leaflet.markercluster.js'></script>
 <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-markercluster/v0.4.0/MarkerCluster.css' rel='stylesheet' />
 <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-markercluster/v0.4.0/MarkerCluster.Default.css' rel='stylesheet' />
@@ -68,7 +68,8 @@ font-size:90%;
 </style>
 
 <div id="map" style="width: 100%; height: 100%;"></div>
-<div id="spinBox" claVss='spinner'></div>
+
+<button id="spinBox" class="btn-primary"><br></button>
 
 <script type="text/javascript">
 
@@ -103,7 +104,7 @@ var map = L.map('map', {
   }
 }).setView([40.231, -74.745], 15);
 
-var stamen = L.tileLayer('https://stamen-tiles.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}.png', {attribution: config.additional_attrib + ' uses a <a href="http://stamen.com">stamen</a> basemap'});
+var stamen = L.tileLayer('http://a.tile.stamen.com/toner-lite/{z}/{x}/{y}.png', {attribution: config.additional_attrib + ' uses a <a href="http://stamen.com">stamen</a> basemap'});
 stamen.addTo(map);
 
 googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
@@ -191,8 +192,8 @@ $.getJSON(etcLayerURL, function(data) { addETC(data, map); });
     });  
     
     var allPropsGet = {
-    sql: "SELECT * FROM trenton_master ",
-    cartocss: "#trenton_properties{polygon-fill: #fff; polygon-opacity:0;line-color:#999; line-opacity:0.2;} #trenton_properties[parc_type='OPEN SPACE OR CEMETERY'] {polygon-fill:#259073; polygon-opacity:.3;}",
+    sql: "SELECT *  FROM trenton_master",
+    cartocss: "#trenton_properties{polygon-fill: #fff; polygon-opacity:0;line-color:#ddd; line-opacity:0.8;} #trenton_properties[parc_type='OPEN SPACE OR CEMETERY'] {polygon-fill:#259073; polygon-opacity:.3;}",
   }
   
    var tdaGet = {
@@ -223,7 +224,9 @@ $.getJSON(etcLayerURL, function(data) { addETC(data, map); });
 	  
      }).on('error', function() { 
       //log the error
-    });
+    });   
+
+<!-- UEZ boundary as sublayer -->
 
 cartodb.createLayer(map, uez_URL)
   .on('done', function(layer) {
@@ -256,7 +259,7 @@ cartodb.createLayer(map, etc_URL)
       //log the error
     });
 
-<!-- UEZ boundary as sublayer -->
+
 
 
 
@@ -264,11 +267,12 @@ cartodb.createLayer(map, etc_URL)
 
 cartoURL_infolayer = encodeURI("https://restoringtrenton.cartodb.com/api/v2/sql?format=GeoJSON&q=SELECT the_geom, parc_type, address, owner, ownstreet, owncity, conditions, notes, leadlot, taxes, totalassmt, waiv_type, zone_abrv, city_liens, priv_liens, redev_area, foreclosed, auction  FROM trenton_master");
 
-var spinner = new Spinner().spin(spinBox);
-$('#spinBox').show();
-		$.getJSON(cartoURL_infolayer,
+
+var counter = 0;
+
+$.getJSON(cartoURL_infolayer,
             function(data) {
-			
+			    counter=0;
 	        infoLayer = L.geoJson(data, {
 				style: 	{color: "#ffffff", fillColor:"#ffffff", weight: 0, opacity:0, fillOpacity:0},
 				
@@ -276,18 +280,20 @@ $('#spinBox').show();
         
 				var bounds = layer.getBounds();
 				var center = bounds.getCenter();
+        
+        counter = counter +1;  
 
-				//sigh, we resort to creepy google again to make the form to report the issues. 
 				
 				var propAdd = feature.properties.address;
 				var cartodbID = feature.properties.cartodb_id;
-				var formURL="https://docs.google.com/forms/d/e/1FAIpQLScIc1YFw09VFoqexutqhkHqGF2zShGu5P2uwutS3Yaob3HeDQ/viewform?entry.1233008467="+propAdd+"&entry.492807532="+cartodbID+"&entry.935525454="+feature.geometry.coordinates+"&entry.1771840456&entry.166967433&entry.1844891497&entry.1779767764&entry.2073537726&entry.1916251852&entry.1028548576&entry.610357054&entry.561214586&entry.973868772&entry.1063181731&entry.1073042997&entry.1811742638&entry.1912605854&entry.1738946058&entry.1237746172&entry.1155841774&entry.233286206&entry.1437250960&entry.824746662&entry.1718281095&entry.1915372513";
-				
+				var bizformURL="https://docs.google.com/forms/d/e/1FAIpQLScIc1YFw09VFoqexutqhkHqGF2zShGu5P2uwutS3Yaob3HeDQ/viewform?entry.1233008467="+propAdd+"&entry.492807532="+cartodbID+"&entry.935525454="+feature.geometry.coordinates+"&entry.1771840456&entry.166967433&entry.1844891497&entry.1779767764&entry.2073537726&entry.1916251852&entry.1028548576&entry.610357054&entry.561214586&entry.973868772&entry.1063181731&entry.1073042997&entry.1811742638&entry.1912605854&entry.1738946058&entry.1237746172&entry.1155841774&entry.233286206&entry.1437250960&entry.824746662&entry.1718281095&entry.1915372513";
+				var propformURL = "https://docs.google.com/forms/d/e/1FAIpQLScRMtL4EmMbj6UpuUMpvN2oquRGLcY5dnIZjtt77nFLLL9Axg/viewform?entry.1233008467=" + propAdd+"&entry.492807532="+cartodbID+"&entry.935525454="+ feature.geometry.coordinates + "&entry.509325473&entry.1916251852";
 				//but check out our sexy popup 
 				
 				var popupContent = "<b>"+ feature.properties.address + 
 									"</b><br>"+ feature.properties.parc_type +
-									"<hr><b><a target = 'blank' href='"+ formURL + "'>BUSINESS</a></b>" +
+									"<hr><b><a target = 'blank' href='"+ bizformURL + "'>BUSINESS</a></b><br>" + 
+                  "<b><a target = 'blank' href='"+ propformURL + "'>PROPERTY INFO</a></b>" +
 									"<hr><b>OWNER</B><BR>"+feature.properties.owner +
 									"<br>"+feature.properties.ownstreet + 
 									"<br>"+feature.properties.owncity +
@@ -306,7 +312,6 @@ $('#spinBox').show();
         layer.bindLabel(feature.properties.address);
 				}
 			});
-				$('#spinBox').hide();
 				infoLayer.addTo(map);
 				
 		});
