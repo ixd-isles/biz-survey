@@ -191,7 +191,7 @@ $.getJSON(etcLayerURL, function(data) { addETC(data, map); });
     
     var allPropsGet = {
     sql: "SELECT *  FROM etc_broad_160810",
-    cartocss: "#trenton_properties{polygon-fill: #fff; polygon-opacity:0;line-color:#ddd; line-opacity:0.8;} #trenton_properties[parc_type='OPEN SPACE OR CEMETERY'] {polygon-fill:#259073; polygon-opacity:.3;}",
+    cartocss: "#etc_broad_160810{polygon-fill: #fff; polygon-opacity:0;line-color:#ddd; line-opacity:0.8;} #etc_broad_160810[parc_type='OPEN SPACE OR CEMETERY'] {polygon-fill:#259073; polygon-opacity:.3;}",
   }
   
    var tdaGet = {
