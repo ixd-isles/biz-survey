@@ -134,7 +134,7 @@ var geocoder = new L.Control.Geocoder.google(),
 	map.addControl(sidebar);
 
 <!-- pulling parcel bases off RestoringTrenton -->
-var parcelMasterURL = 'https://restoringtrenton.cartodb.com/api/v2/viz/aebbd47a-5690-11e5-beed-0e853d047bba/viz.json';
+var parcelMasterURL = 'https://trenton-downtown.carto.com/api/v2/viz/d391ce26-5f2c-11e6-beae-0e3ff518bd15/viz.json';
 
 <!-- TDA boundary -->
 var tda_URL = 'https://trenton-downtown.cartodb.com/api/v2/viz/c929e5fa-2781-11e6-a299-0e31c9be1b51/viz.json';
@@ -190,7 +190,7 @@ $.getJSON(etcLayerURL, function(data) { addETC(data, map); });
     });  
     
     var allPropsGet = {
-    sql: "SELECT *  FROM trenton_master",
+    sql: "SELECT *  FROM etc_broad_160810",
     cartocss: "#trenton_properties{polygon-fill: #fff; polygon-opacity:0;line-color:#ddd; line-opacity:0.8;} #trenton_properties[parc_type='OPEN SPACE OR CEMETERY'] {polygon-fill:#259073; polygon-opacity:.3;}",
   }
   
@@ -204,7 +204,7 @@ $.getJSON(etcLayerURL, function(data) { addETC(data, map); });
 	 sql: "SELECT * FROM trenton_uez"} 
    
    var vacantPropsGet = {
-    sql: "SELECT * FROM trenton_master where parc_type like '%VACANT%'",
+    sql: "SELECT * FROM etc_broad_160810 where parc_type like '%VACANT%'",
     cartocss: "#trenton_master[parc_type='VACANT LOT']{polygon-fill: #B9D132; polygon-opacity:0.5;line-color:#fff; line-opacity:0.4;} #trenton_master[parc_type = 'VACANT BLDG'] {polygon-fill: #FF0000; polygon-opacity:0.5;line-color: #fff; line-opacity:0.4;} #trenton_master[parc_type = 'VACANT LOWER'] {polygon-fill: #FF9900; polygon-opacity:0.6;line-color: #fff; line-opacity:0.4;}",
 	 } 
 
@@ -263,7 +263,7 @@ cartodb.createLayer(map, etc_URL)
 
  		var popup = L.popup();    
 
-cartoURL_infolayer = encodeURI("https://restoringtrenton.cartodb.com/api/v2/sql?format=GeoJSON&q=SELECT the_geom, parc_type, address, owner, ownstreet, owncity, conditions, notes, leadlot, taxes, totalassmt, waiv_type, zone_abrv, city_liens, priv_liens, redev_area, foreclosed, auction  FROM trenton_master");
+cartoURL_infolayer = encodeURI("https://trenton-downtown.cartodb.com/api/v2/sql?format=GeoJSON&q=SELECT the_geom, parc_type, address, owner, ownstreet, owncity, conditions, notes, leadlot, taxes, totalassmt, waiv_type, zone_abrv, city_liens, priv_liens, redev_area, foreclosed, auction  FROM etc_broad_160810");
 
 
 var counter = 0;
